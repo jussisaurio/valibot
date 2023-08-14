@@ -1,5 +1,5 @@
 import { ValiError } from '../../error/index.ts';
-import type { BaseSchemaAsync } from '../../types.ts';
+import { notOk, type BaseSchemaAsync, ok } from '../../types.ts';
 import { getIssue } from '../../utils/index.ts';
 
 /**
@@ -52,7 +52,7 @@ export function literalAsync<TLiteral extends string | number>(
     async parse(input, info) {
       // Check type of input
       if (input !== literal) {
-        throw new ValiError([
+        return notOk([
           getIssue(info, {
             reason: 'type',
             validation: 'literal',
@@ -63,7 +63,7 @@ export function literalAsync<TLiteral extends string | number>(
       }
 
       // Return output
-      return input as TLiteral;
+      return ok(input as TLiteral);
     },
   };
 }

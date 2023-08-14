@@ -1,5 +1,5 @@
 import { ValiError } from '../../error/index.ts';
-import type { BaseSchema } from '../../types.ts';
+import { notOk, type BaseSchema, ok } from '../../types.ts';
 import { getIssue } from '../../utils/index.ts';
 
 /**
@@ -39,7 +39,7 @@ export function voidType(error?: string): VoidSchema {
     parse(input, info) {
       // Check type of input
       if (typeof input !== 'undefined') {
-        throw new ValiError([
+        return notOk([
           getIssue(info, {
             reason: 'type',
             validation: 'void',
@@ -50,7 +50,7 @@ export function voidType(error?: string): VoidSchema {
       }
 
       // Return output
-      return input;
+      return ok(input);
     },
   };
 }

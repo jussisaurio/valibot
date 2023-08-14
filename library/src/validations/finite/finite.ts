@@ -1,5 +1,5 @@
 import { ValiError } from '../../error/index.ts';
-import type { ValidateInfo } from '../../types.ts';
+import { notOk, ok, type ValidateInfo } from '../../types.ts';
 import { getIssue } from '../../utils/index.ts';
 
 /**
@@ -12,7 +12,7 @@ import { getIssue } from '../../utils/index.ts';
 export function finite<TInput extends number>(error?: string) {
   return (input: TInput, info: ValidateInfo) => {
     if (!Number.isFinite(input)) {
-      throw new ValiError([
+      return notOk([
         getIssue(info, {
           validation: 'finite',
           message: error || 'Invalid finite number',
@@ -20,6 +20,6 @@ export function finite<TInput extends number>(error?: string) {
         }),
       ]);
     }
-    return input;
+    return ok(input);
   };
 }

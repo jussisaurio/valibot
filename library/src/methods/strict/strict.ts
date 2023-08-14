@@ -1,5 +1,6 @@
 import { ValiError } from '../../error/index.ts';
 import type { ObjectSchema } from '../../schemas/object/index.ts';
+import { notOk, ok } from '../../types.ts';
 import { getIssue } from '../../utils/index.ts';
 
 /**
@@ -32,7 +33,7 @@ export function strict<TSchema extends ObjectSchema<any>>(
 
       // Check length of input and output keys
       if (Object.keys(input as object).length !== Object.keys(output).length) {
-        throw new ValiError([
+        return notOk([
           getIssue(info, {
             reason: 'object',
             validation: 'strict',
@@ -43,7 +44,7 @@ export function strict<TSchema extends ObjectSchema<any>>(
       }
 
       // Return output of object schema
-      return output;
+      return ok(output);
     },
   };
 }

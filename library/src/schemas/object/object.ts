@@ -1,5 +1,5 @@
 import { type Issue, type Issues, ValiError } from '../../error/index.ts';
-import type { BaseSchema, Pipe } from '../../types.ts';
+import { notOk, type BaseSchema, type Pipe, type Result } from '../../types.ts';
 import {
   executePipe,
   getErrorAndPipe,
@@ -90,14 +90,14 @@ export function object<TObjectShape extends ObjectShape>(
      *
      * @returns The parsed output.
      */
-    parse(input, info) {
+    parse(input, info): Result<ObjectOutput<TObjectShape>> {
       // Check type of input
       if (
         !input ||
         typeof input !== 'object' ||
         input.toString() !== '[object Object]'
       ) {
-        throw new ValiError([
+        return notOk([
           getIssue(info, {
             reason: 'type',
             validation: 'object',
@@ -116,10 +116,9 @@ export function object<TObjectShape extends ObjectShape>(
 
       // Parse schema of each key
       for (const objectEntry of cachedEntries) {
-        try {
           const key = objectEntry[0];
           const value = (input as Record<string, unknown>)[key];
-          output[key] = objectEntry[1].parse(
+          const result = objectEntry[1].parse(
             value,
             getPathInfo(
               info,
@@ -132,18 +131,19 @@ export function object<TObjectShape extends ObjectShape>(
             )
           );
 
-          // Throw or fill issues in case of an error
-        } catch (error) {
-          if (info?.abortEarly) {
-            throw error;
-          }
-          issues.push(...(error as ValiError).issues);
-        }
+          if (!result.success) {
+            if (info?.abortEarly) {
+              return result;
+            }
+            issues.push(...result.issues);
+          } else {
+            output[key] = result.output;
+      }
       }
 
       // Throw error if there are issues
       if (issues.length) {
-        throw new ValiError(issues as Issues);
+        return notOk(issues);
       }
 
       // Execute pipe and return output

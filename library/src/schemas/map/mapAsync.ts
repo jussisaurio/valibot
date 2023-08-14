@@ -1,9 +1,11 @@
 import { type Issue, type Issues, ValiError } from '../../error/index.ts';
-import type {
-  BaseSchema,
-  BaseSchemaAsync,
-  Output,
-  PipeAsync,
+import {
+  notOk,
+  type BaseSchema,
+  type BaseSchemaAsync,
+  type Output,
+  type PipeAsync,
+  Result,
 } from '../../types.ts';
 import {
   executePipeAsync,
@@ -105,7 +107,7 @@ export function mapAsync<
     async parse(input, info) {
       // Check type of input
       if (!(input instanceof Map)) {
-        throw new ValiError([
+        return notOk([
           getIssue(info, {
             reason: 'type',
             validation: 'map',
@@ -120,7 +122,7 @@ export function mapAsync<
       const issues: Issue[] = [];
 
       // Parse each key and value by schema
-      await Promise.all(
+      const fail = await Promise.all(
         Array.from(input.entries()).map(async (inputEntry) => {
           // Get input key and value
           const inputKey = inputEntry[0];
@@ -137,38 +139,32 @@ export function mapAsync<
           const [outputKey, outputValue] = await Promise.all([
             // Parse key and get output
             (async () => {
-              try {
                 // Note: Output key is nested in array, so that also a falsy value
                 // further down can be recognized as valid value
-                return [
-                  await key.parse(inputKey, getPathInfo(info, path, 'key')),
-                ] as const;
-
-                // Throw or fill issues in case of an error
-              } catch (error) {
-                if (info?.abortEarly) {
-                  throw error;
+                const keyResult = await key.parse(inputKey, getPathInfo(info, path, 'key'));
+                if (!keyResult.success) {
+                  if (info?.abortEarly) {
+                    throw keyResult
+                  }
+                  issues.push(...keyResult.issues);
+                } else {
+                  return [keyResult.output] as const;
                 }
-                issues.push(...(error as ValiError).issues);
-              }
             })(),
 
             // Parse value and get output
             (async () => {
-              try {
                 // Note: Output value is nested in array, so that also a falsy value
                 // further down can be recognized as valid value
-                return [
-                  await value.parse(inputValue, getPathInfo(info, path)),
-                ] as const;
-
-                // Throw or fill issues in case of an error
-              } catch (error) {
-                if (info?.abortEarly) {
-                  throw error;
+                const valueResult = await value.parse(inputValue, getPathInfo(info, path, 'value'));
+                if (!valueResult.success) {
+                  if (info?.abortEarly) {
+                    throw valueResult
+                  }
+                  issues.push(...valueResult.issues);
+                } else {
+                  return [valueResult.output] as const;
                 }
-                issues.push(...(error as ValiError).issues);
-              }
             })(),
           ]);
 
@@ -177,11 +173,15 @@ export function mapAsync<
             output.set(outputKey[0], outputValue[0]);
           }
         })
-      );
+      ).catch((e) => e as Result<never>);
+
+      if ('success' in fail) {
+        return fail as Result<never>;
+      }
 
       // Throw error if there are issues
       if (issues.length) {
-        throw new ValiError(issues as Issues);
+        return notOk(issues);
       }
 
       // Execute pipe and return output

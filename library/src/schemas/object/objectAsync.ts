@@ -1,5 +1,5 @@
 import { type Issue, type Issues, ValiError } from '../../error/index.ts';
-import type { BaseSchema, BaseSchemaAsync, PipeAsync } from '../../types.ts';
+import { notOk, type BaseSchema, type BaseSchemaAsync, type PipeAsync, Result } from '../../types.ts';
 import {
   executePipeAsync,
   getErrorAndPipe,
@@ -100,7 +100,7 @@ export function objectAsync<TObjectShape extends ObjectShapeAsync>(
         typeof input !== 'object' ||
         input.toString() !== '[object Object]'
       ) {
-        throw new ValiError([
+        return notOk([
           getIssue(info, {
             reason: 'type',
             validation: 'object',
@@ -118,12 +118,11 @@ export function objectAsync<TObjectShape extends ObjectShapeAsync>(
       const issues: Issue[] = [];
 
       // Parse schema of each key
-      await Promise.all(
+      const fail = await Promise.all(
         cachedEntries.map(async (objectEntry) => {
-          try {
             const key = objectEntry[0];
             const value = (input as Record<string, unknown>)[key];
-            output[key] = await objectEntry[1].parse(
+            const result = await objectEntry[1].parse(
               value,
               getPathInfo(
                 info,
@@ -136,19 +135,24 @@ export function objectAsync<TObjectShape extends ObjectShapeAsync>(
               )
             );
 
-            // Throw or fill issues in case of an error
-          } catch (error) {
-            if (info?.abortEarly) {
-              throw error;
+            if (!result.success) {
+              if (info?.abortEarly) {
+                throw result;
+              }
+              issues.push(...result.issues);
+            } else {
+              output[key] = result.output;
             }
-            issues.push(...(error as ValiError).issues);
-          }
         })
-      );
+      ).catch((result) => result as Result<never>);
+
+      if ('success' in fail) {
+        return fail;
+      }
 
       // Throw error if there are issues
       if (issues.length) {
-        throw new ValiError(issues as Issues);
+        return notOk(issues);
       }
 
       // Execute pipe and return output

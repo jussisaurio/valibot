@@ -1,5 +1,5 @@
 import { ValiError } from '../../error/index.ts';
-import type { BaseSchemaAsync, PipeAsync } from '../../types.ts';
+import { notOk, type BaseSchemaAsync, type PipeAsync } from '../../types.ts';
 import {
   executePipeAsync,
   getErrorAndPipe,
@@ -66,7 +66,7 @@ export function dateAsync(
     async parse(input, info) {
       // Check type of input
       if (!(input instanceof Date)) {
-        throw new ValiError([
+        return notOk([
           getIssue(info, {
             reason: 'type',
             validation: 'date',

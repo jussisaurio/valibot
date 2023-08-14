@@ -1,5 +1,5 @@
 import { ValiError } from '../../error/index.ts';
-import type { ValidateInfo } from '../../types.ts';
+import { notOk, ok, type ValidateInfo } from '../../types.ts';
 import { getIssue } from '../../utils/index.ts';
 
 export function includes<TInput extends string>(
@@ -26,7 +26,7 @@ export function includes<TInput extends string | TItem[], TItem>(
 ) {
   return (input: TInput, info: ValidateInfo) => {
     if (!input.includes(requirement as any)) {
-      throw new ValiError([
+      return notOk([
         getIssue(info, {
           validation: 'includes',
           message: error || 'Invalid content',
@@ -34,6 +34,6 @@ export function includes<TInput extends string | TItem[], TItem>(
         }),
       ]);
     }
-    return input;
+    return ok(input);
   };
 }

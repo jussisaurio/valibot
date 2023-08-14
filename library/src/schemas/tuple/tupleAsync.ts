@@ -1,5 +1,5 @@
 import { type Issue, type Issues, ValiError } from '../../error/index.ts';
-import type { BaseSchema, BaseSchemaAsync, PipeAsync } from '../../types.ts';
+import { notOk, type BaseSchema, type BaseSchemaAsync, type PipeAsync, Result } from '../../types.ts';
 import {
   executePipeAsync,
   getErrorAndPipe,
@@ -154,7 +154,7 @@ export function tupleAsync<
         (!rest && items.length !== input.length) ||
         (rest && items.length > input.length)
       ) {
-        throw new ValiError([
+        return notOk([
           getIssue(info, {
             reason: 'type',
             validation: 'tuple',
@@ -168,13 +168,12 @@ export function tupleAsync<
       const output: any[] = [];
       const issues: Issue[] = [];
 
-      await Promise.all([
+      const fail = await Promise.all([
         // Parse schema of each tuple item
         Promise.all(
           items.map(async (schema, index) => {
-            try {
               const value = input[index];
-              output[index] = await schema.parse(
+              const result = await schema.parse(
                 value,
                 getPathInfo(
                   info,
@@ -187,13 +186,14 @@ export function tupleAsync<
                 )
               );
 
-              // Throw or fill issues in case of an error
-            } catch (error) {
-              if (info?.abortEarly) {
-                throw error;
+              if (!result.success) {
+                if(info?.abortEarly) {
+                  throw result;
+                }
+                issues.push(...result.issues);
+              } else {
+                output[index] = result.output;
               }
-              issues.push(...(error as ValiError).issues);
-            }
           })
         ),
 
@@ -225,11 +225,15 @@ export function tupleAsync<
               }
             })
           ),
-      ]);
+      ]).catch(result => result as Result<never>);
+
+      if ('success' in fail) {
+        return fail;
+      }
 
       // Throw error if there are issues
       if (issues.length) {
-        throw new ValiError(issues as Issues);
+        return notOk(issues);
       }
 
       // Execute pipe and return output

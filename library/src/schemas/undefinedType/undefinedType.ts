@@ -1,5 +1,5 @@
 import { ValiError } from '../../error/index.ts';
-import type { BaseSchema } from '../../types.ts';
+import { notOk, type BaseSchema, ok } from '../../types.ts';
 import { getIssue } from '../../utils/index.ts';
 
 /**
@@ -42,7 +42,7 @@ export function undefinedType(error?: string): UndefinedSchema {
     parse(input, info) {
       // Check type of input
       if (typeof input !== 'undefined') {
-        throw new ValiError([
+        return notOk([
           getIssue(info, {
             reason: 'type',
             validation: 'undefined',
@@ -53,7 +53,7 @@ export function undefinedType(error?: string): UndefinedSchema {
       }
 
       // Return output
-      return input;
+      return ok(input);
     },
   };
 }

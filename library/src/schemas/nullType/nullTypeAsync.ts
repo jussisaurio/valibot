@@ -1,5 +1,5 @@
 import { ValiError } from '../../error/index.ts';
-import type { BaseSchemaAsync } from '../../types.ts';
+import { notOk, type BaseSchemaAsync, ok } from '../../types.ts';
 import { getIssue } from '../../utils/index.ts';
 
 /**
@@ -39,7 +39,7 @@ export function nullTypeAsync(error?: string): NullSchemaAsync {
     async parse(input, info) {
       // Check type of input
       if (input !== null) {
-        throw new ValiError([
+        return notOk([
           getIssue(info, {
             reason: 'type',
             validation: 'null',
@@ -50,7 +50,7 @@ export function nullTypeAsync(error?: string): NullSchemaAsync {
       }
 
       // Return output
-      return input;
+      return ok(input);
     },
   };
 }

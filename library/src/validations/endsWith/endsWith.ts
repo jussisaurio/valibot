@@ -1,5 +1,5 @@
 import { ValiError } from '../../error/index.ts';
-import type { ValidateInfo } from '../../types.ts';
+import { notOk, ok, type ValidateInfo } from '../../types.ts';
 import { getIssue } from '../../utils/index.ts';
 
 /**
@@ -16,7 +16,7 @@ export function endsWith<TInput extends string>(
 ) {
   return (input: TInput, info: ValidateInfo) => {
     if (!input.endsWith(requirement as any)) {
-      throw new ValiError([
+      return notOk([
         getIssue(info, {
           validation: 'ends_with',
           message: error || 'Invalid end',
@@ -24,6 +24,6 @@ export function endsWith<TInput extends string>(
         }),
       ]);
     }
-    return input;
+    return ok(input);
   };
 }

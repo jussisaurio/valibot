@@ -1,9 +1,10 @@
 import { ValiError } from '../../error/index.ts';
-import type {
-  BaseSchema,
-  BaseSchemaAsync,
-  Input,
-  Output,
+import {
+  notOk,
+  type BaseSchema,
+  type BaseSchemaAsync,
+  type Input,
+  type Output,
 } from '../../types.ts';
 import { getIssue } from '../../utils/index.ts';
 import type { NonOptional } from './nonOptional.ts';
@@ -60,7 +61,7 @@ export function nonOptionalAsync<
     async parse(input, info) {
       // Allow `undefined` values not to pass
       if (input === undefined) {
-        throw new ValiError([
+        return notOk([
           getIssue(info, {
             reason: 'type',
             validation: 'non_optional',

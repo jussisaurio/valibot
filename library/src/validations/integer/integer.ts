@@ -1,5 +1,5 @@
 import { ValiError } from '../../error/index.ts';
-import type { ValidateInfo } from '../../types.ts';
+import { notOk, ok, type ValidateInfo } from '../../types.ts';
 import { getIssue } from '../../utils/index.ts';
 
 /**
@@ -12,7 +12,7 @@ import { getIssue } from '../../utils/index.ts';
 export function integer<TInput extends number>(error?: string) {
   return (input: TInput, info: ValidateInfo) => {
     if (!Number.isInteger(input)) {
-      throw new ValiError([
+      return notOk([
         getIssue(info, {
           validation: 'integer',
           message: error || 'Invalid integer',
@@ -20,6 +20,6 @@ export function integer<TInput extends number>(error?: string) {
         }),
       ]);
     }
-    return input;
+    return ok(input);
   };
 }

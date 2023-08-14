@@ -1,4 +1,4 @@
-import type { BaseSchema, Input, Output } from '../../types.ts';
+import { ok, type BaseSchema, type Input, type Output } from '../../types.ts';
 
 /**
  * Nullish schema type.
@@ -48,7 +48,7 @@ export function nullish<TWrappedSchema extends BaseSchema>(
     parse(input, info) {
       // Allow `null` or `undefined` values to pass
       if (input === null || input === undefined) {
-        return input;
+        return ok(input);
       }
 
       // Parse wrapped schema and return output

@@ -1,5 +1,5 @@
 import { ValiError } from '../../error/index.ts';
-import type { BaseSchema } from '../../types.ts';
+import { notOk, type BaseSchema } from '../../types.ts';
 import { getIssue } from '../../utils/index.ts';
 
 /**
@@ -37,7 +37,7 @@ export function never(error?: string): NeverSchema {
      * @returns The parsed output.
      */
     parse(input, info) {
-      throw new ValiError([
+      return notOk([
         getIssue(info, {
           reason: 'type',
           validation: 'never',

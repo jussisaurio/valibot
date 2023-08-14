@@ -1,5 +1,5 @@
 import { type Issue, type Issues, ValiError } from '../../error/index.ts';
-import type { BaseSchema, Input, Output, Pipe } from '../../types.ts';
+import { notOk, type BaseSchema, type Input, type Output, type Pipe } from '../../types.ts';
 import {
   executePipe,
   getErrorAndPipe,
@@ -94,14 +94,14 @@ export function array<TArrayItem extends BaseSchema>(
     parse(input, info) {
       // Check type of input
       if (!Array.isArray(input)) {
-        throw new ValiError([
+        return { success: false, issues:[
           getIssue(info, {
             reason: 'type',
             validation: 'array',
             message: error || 'Invalid type',
             input,
           }),
-        ]);
+        ] };
       }
 
       // Create output and issues
@@ -110,35 +110,35 @@ export function array<TArrayItem extends BaseSchema>(
 
       // Parse schema of each array item
       for (let index = 0; index < input.length; index++) {
-        try {
           const value = input[index];
-          output.push(
-            item.parse(
-              value,
-              getPathInfo(
-                info,
-                getPath(info?.path, {
-                  schema: 'array',
-                  input: input,
-                  key: index,
-                  value,
-                })
-              )
+          const result = item.parse(
+            value,
+            getPathInfo(
+              info,
+              getPath(info?.path, {
+                schema: 'array',
+                input: input,
+                key: index,
+                value,
+              })
             )
           );
 
-          // Throw or fill issues in case of an error
-        } catch (error) {
-          if (info?.abortEarly) {
-            throw error;
+          if (info?.abortEarly && !result.success) {
+            return result;
           }
-          issues.push(...(error as ValiError).issues);
-        }
+
+          if (!result.success) {
+            issues.push(...result.issues);
+          } else {
+            output.push(
+              result.output
+            );
+          }
       }
 
-      // Throw error if there are issues
       if (issues.length) {
-        throw new ValiError(issues as Issues);
+        return notOk(issues)
       }
 
       // Execute pipe and return output

@@ -1,8 +1,9 @@
-import type {
-  BaseSchema,
-  BaseSchemaAsync,
-  Input,
-  Output,
+import {
+  ok,
+  type BaseSchema,
+  type BaseSchemaAsync,
+  type Input,
+  type Output,
 } from '../../types.ts';
 
 /**
@@ -53,7 +54,7 @@ export function optionalAsync<
     async parse(input, info) {
       // Allow `undefined` values to pass
       if (input === undefined) {
-        return input;
+        return ok(undefined);
       }
 
       // Parse wrapped schema and return output

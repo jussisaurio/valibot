@@ -1,5 +1,5 @@
 import { ValiError } from '../../error/index.ts';
-import type { ValidateInfo } from '../../types.ts';
+import { notOk, type ValidateInfo } from '../../types.ts';
 import { getIssue } from '../../utils/index.ts';
 
 /**
@@ -16,7 +16,7 @@ export function bytes<TInput extends string>(
 ) {
   return (input: TInput, info: ValidateInfo) => {
     if (new TextEncoder().encode(input).length !== requirement) {
-      throw new ValiError([
+      return notOk([
         getIssue(info, {
           validation: 'bytes',
           message: error || 'Invalid byte length',

@@ -31,12 +31,30 @@ export type PathItem =
   | SetPathItem
   | ArrayPathItem;
 
+export type Result<TOutput> = {
+  success: true;
+  output: TOutput;
+} | {
+  success: false;
+  issues: Issue[];
+};
+
+export const ok = <TValue>(output: TValue): Result<TValue> => ({
+  success: true,
+  output,
+});
+
+export const notOk = (issues: Issue[]): Result<never> => ({
+  success: false,
+  issues,
+});
+
 /**
  * Base schema type.
  */
 export type BaseSchema<TInput = any, TOutput = TInput> = {
   async: false;
-  parse(input: unknown, info?: ParseInfo): TOutput;
+  parse(input: unknown, info?: ParseInfo): Result<TOutput>;
   types?: { input: TInput; output: TOutput };
 };
 
@@ -45,7 +63,7 @@ export type BaseSchema<TInput = any, TOutput = TInput> = {
  */
 export type BaseSchemaAsync<TInput = any, TOutput = TInput> = {
   async: true;
-  parse(input: unknown, info?: ParseInfo): Promise<TOutput>;
+  parse(input: unknown, info?: ParseInfo): Promise<Result<TOutput>>;
   types?: { input: TInput; output: TOutput };
 };
 
@@ -66,7 +84,7 @@ export type Output<TSchema extends BaseSchema | BaseSchemaAsync> = NonNullable<
 /**
  * Validation and transformation pipe type.
  */
-export type Pipe<TValue> = ((value: TValue, info: ValidateInfo) => TValue)[];
+export type Pipe<TValue> = ((value: TValue, info: ValidateInfo) => Result<TValue>)[];
 
 /**
  * Async validation and transformation pipe type.
@@ -74,7 +92,7 @@ export type Pipe<TValue> = ((value: TValue, info: ValidateInfo) => TValue)[];
 export type PipeAsync<TValue> = ((
   value: TValue,
   info: ValidateInfo
-) => TValue | Promise<TValue>)[];
+) => Result<TValue> | Promise<Result<TValue>>)[];
 
 /**
  * Resolve type.

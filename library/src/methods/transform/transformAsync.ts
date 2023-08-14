@@ -69,6 +69,7 @@ import type {
   BaseSchemaAsync,
   Input,
   Output,
+  Result,
 } from '../../types.ts';
 
 export function transformAsync<
@@ -346,7 +347,7 @@ export function transformAsync<
   TOutput
 >(
   schema: TSchema,
-  action: (value: Output<TSchema>) => TOutput | Promise<TOutput>
+  action: (value: Output<TSchema>) => Result<TOutput> | Promise<Result<TOutput>>
 ): BaseSchemaAsync<Input<TSchema>, TOutput> {
   return {
     ...schema,
@@ -365,7 +366,11 @@ export function transformAsync<
      * @returns The parsed output.
      */
     async parse(input, info) {
-      return action(await schema.parse(input, info));
+      const result = await schema.parse(input, info);
+      if (!result.success) {
+        return result;
+      }
+      return action(result.output);
     },
   };
 }

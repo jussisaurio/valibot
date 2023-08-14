@@ -1,5 +1,5 @@
 import { ValiError } from '../../error/index.ts';
-import type { BaseSchema, Input, Output } from '../../types.ts';
+import { notOk, type BaseSchema, type Input, type Output } from '../../types.ts';
 import { getIssue } from '../../utils/index.ts';
 
 /**
@@ -57,7 +57,7 @@ export function nonNullable<TWrappedSchema extends BaseSchema>(
     parse(input, info) {
       // Allow `null` values not to pass
       if (input === null) {
-        throw new ValiError([
+        return notOk([
           getIssue(info, {
             reason: 'type',
             validation: 'non_nullable',

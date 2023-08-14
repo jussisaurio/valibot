@@ -1,9 +1,11 @@
 import { type Issue, type Issues, ValiError } from '../../error/index.ts';
-import type {
-  BaseSchema,
-  BaseSchemaAsync,
-  Input,
-  Output,
+import {
+  notOk,
+  type BaseSchema,
+  type BaseSchemaAsync,
+  type Input,
+  type Output,
+  ok,
 } from '../../types.ts';
 import { getIssue } from '../../utils/index.ts';
 
@@ -70,21 +72,22 @@ export function unionAsync<TUnionOptions extends UnionOptionsAsync>(
 
       // Parse schema of each option
       for (const schema of union) {
-        try {
           // Note: Output is nested in array, so that also a falsy value
           // further down can be recognized as valid value
+          const result = await schema.parse(input, info);
+          if (!result.success) {
+            issues.push(...result.issues);
+          } else {
+            output = result.output;
+            break;
+          }
           output = [await schema.parse(input, info)];
           break;
-
-          // Fill issues in case of an error
-        } catch (error) {
-          issues.push(...(error as ValiError).issues);
-        }
       }
 
       // Throw error if every schema failed
       if (!output) {
-        throw new ValiError([
+        return notOk([
           getIssue(info, {
             reason: 'type',
             validation: 'union',
@@ -96,7 +99,7 @@ export function unionAsync<TUnionOptions extends UnionOptionsAsync>(
       }
 
       // Otherwise return parsed output
-      return output[0];
+      return ok(output[0]);
     },
   };
 }

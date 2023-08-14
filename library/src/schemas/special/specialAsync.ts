@@ -1,5 +1,5 @@
 import { ValiError } from '../../error/index.ts';
-import type { BaseSchemaAsync, PipeAsync } from '../../types.ts';
+import { notOk, type BaseSchemaAsync, type PipeAsync } from '../../types.ts';
 import {
   executePipeAsync,
   getErrorAndPipe,
@@ -76,7 +76,7 @@ export function specialAsync<TInput>(
     async parse(input, info) {
       // Check type of input
       if (!(await check(input))) {
-        throw new ValiError([
+        return notOk([
           getIssue(info, {
             reason: 'type',
             validation: 'special',

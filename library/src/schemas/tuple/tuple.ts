@@ -1,5 +1,5 @@
 import { type Issue, type Issues, ValiError } from '../../error/index.ts';
-import type { BaseSchema, Pipe } from '../../types.ts';
+import { notOk, type BaseSchema, type Pipe } from '../../types.ts';
 import {
   executePipe,
   getErrorAndPipe,
@@ -151,7 +151,7 @@ export function tuple<
         (!rest && items.length !== input.length) ||
         (rest && items.length > input.length)
       ) {
-        throw new ValiError([
+        return notOk([
           getIssue(info, {
             reason: 'type',
             validation: 'tuple',
@@ -167,9 +167,8 @@ export function tuple<
 
       // Parse schema of each tuple item
       for (let index = 0; index < items.length; index++) {
-        try {
           const value = input[index];
-          output[index] = items[index].parse(
+          const result = items[index].parse(
             value,
             getPathInfo(
               info,
@@ -182,21 +181,21 @@ export function tuple<
             )
           );
 
-          // Throw or fill issues in case of an error
-        } catch (error) {
-          if (info?.abortEarly) {
-            throw error;
+          if (!result.success) {
+            if (info?.abortEarly) {
+              return result;
+            }
+            issues.push(...result.issues);
+          } else {
+            output[index] = result.output
           }
-          issues.push(...(error as ValiError).issues);
-        }
       }
 
       // If necessary parse schema of each rest item
       if (rest) {
         for (let index = items.length; index < input.length; index++) {
-          try {
             const value = input[index];
-            output[index] = rest.parse(
+            const result = rest.parse(
               value,
               getPathInfo(
                 info,
@@ -209,19 +208,20 @@ export function tuple<
               )
             );
 
-            // Throw or fill issues in case of an error
-          } catch (error) {
-            if (info?.abortEarly) {
-              throw error;
+            if (!result.success) {
+              if (info?.abortEarly) {
+                return result;
+              }
+              issues.push(...result.issues);
+            } else {
+              output[index] = result.output
             }
-            issues.push(...(error as ValiError).issues);
-          }
         }
       }
 
       // Throw error if there are issues
       if (issues.length) {
-        throw new ValiError(issues as Issues);
+        return notOk(issues);
       }
 
       // Execute pipe and return output

@@ -1,5 +1,5 @@
 import { ValiError } from '../../error/index.ts';
-import type { BaseSchemaAsync } from '../../types.ts';
+import { notOk, type BaseSchemaAsync, ok } from '../../types.ts';
 import { getIssue } from '../../utils/index.ts';
 import type { NativeEnum } from './nativeEnum.ts';
 
@@ -53,7 +53,7 @@ export function nativeEnumAsync<TNativeEnum extends NativeEnum>(
     async parse(input, info) {
       // Check type of input
       if (!Object.values(nativeEnum).includes(input as any)) {
-        throw new ValiError([
+        return notOk([
           getIssue(info, {
             reason: 'type',
             validation: 'native_enum',
@@ -64,7 +64,7 @@ export function nativeEnumAsync<TNativeEnum extends NativeEnum>(
       }
 
       // Return output
-      return input as TNativeEnum[keyof TNativeEnum];
+      return ok(input as TNativeEnum[keyof TNativeEnum]);
     },
   };
 }

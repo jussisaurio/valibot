@@ -1,5 +1,5 @@
 import { ValiError } from '../../error/index.ts';
-import type { BaseSchemaAsync } from '../../types.ts';
+import { notOk, type BaseSchemaAsync, ok } from '../../types.ts';
 import { getIssue } from '../../utils/index.ts';
 
 /**
@@ -42,7 +42,7 @@ export function symbolAsync(error?: string): SymbolSchemaAsync {
     async parse(input, info) {
       // Check type of input
       if (typeof input !== 'symbol') {
-        throw new ValiError([
+        return notOk([
           getIssue(info, {
             reason: 'type',
             validation: 'symbol',
@@ -53,7 +53,7 @@ export function symbolAsync(error?: string): SymbolSchemaAsync {
       }
 
       // Return output
-      return input;
+      return ok(input);
     },
   };
 }

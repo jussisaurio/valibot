@@ -1,5 +1,5 @@
 import { ValiError } from '../../error/index.ts';
-import type { ValidateInfo } from '../../types.ts';
+import { notOk, ok, type ValidateInfo } from '../../types.ts';
 import { getIssue } from '../../utils/index.ts';
 
 /**
@@ -12,7 +12,7 @@ import { getIssue } from '../../utils/index.ts';
 export function emoji<TInput extends string>(error?: string) {
   return (input: TInput, info: ValidateInfo) => {
     if (!/^(\p{Extended_Pictographic}|\p{Emoji_Component})+$/u.test(input)) {
-      throw new ValiError([
+      return notOk([
         getIssue(info, {
           validation: 'emoji',
           message: error || 'Invalid emoji',
@@ -20,6 +20,6 @@ export function emoji<TInput extends string>(error?: string) {
         }),
       ]);
     }
-    return input;
+    return ok(input);
   };
 }

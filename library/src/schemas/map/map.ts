@@ -1,5 +1,5 @@
 import { type Issue, type Issues, ValiError } from '../../error/index.ts';
-import type { BaseSchema, Output, Pipe } from '../../types.ts';
+import { notOk, type BaseSchema, type Output, type Pipe } from '../../types.ts';
 import {
   executePipe,
   getErrorAndPipe,
@@ -91,7 +91,7 @@ export function map<TMapKey extends BaseSchema, TMapValue extends BaseSchema>(
     parse(input, info) {
       // Check type of input
       if (!(input instanceof Map)) {
-        throw new ValiError([
+        return notOk([
           getIssue(info, {
             reason: 'type',
             validation: 'map',
@@ -121,33 +121,31 @@ export function map<TMapKey extends BaseSchema, TMapValue extends BaseSchema>(
 
         // Parse key and get output
         let outputKey: [any] | undefined;
-        try {
           // Note: Output key is nested in array, so that also a falsy value
           // further down can be recognized as valid value
-          outputKey = [key.parse(inputKey, getPathInfo(info, path, 'key'))];
-
-          // Throw or fill issues in case of an error
-        } catch (error) {
-          if (info?.abortEarly) {
-            throw error;
+          const keyResult = key.parse(inputKey, getPathInfo(info, path, 'key'))
+          if (!keyResult.success) {
+            if (info?.abortEarly) {
+              return keyResult;
+            }
+            issues.push(...keyResult.issues);
+          } else {
+            outputKey = [keyResult.output];
           }
-          issues.push(...(error as ValiError).issues);
-        }
 
         // Parse value and get output
         let outputValue: [any] | undefined;
-        try {
           // Note: Output value is nested in array, so that also a falsy value
           // further down can be recognized as valid value
-          outputValue = [value.parse(inputValue, getPathInfo(info, path))];
-
-          // Throw or fill issues in case of an error
-        } catch (error) {
-          if (info?.abortEarly) {
-            throw error;
+          const valueResult = value.parse(inputValue, getPathInfo(info, path, 'value'))
+          if (!valueResult.success) {
+            if (info?.abortEarly) {
+              return valueResult;
+            }
+            issues.push(...valueResult.issues);
+          } else {
+            outputValue = [valueResult.output];
           }
-          issues.push(...(error as ValiError).issues);
-        }
 
         // Set entry if output key and value is valid
         if (outputKey && outputValue) {
@@ -157,7 +155,7 @@ export function map<TMapKey extends BaseSchema, TMapValue extends BaseSchema>(
 
       // Throw error if there are issues
       if (issues.length) {
-        throw new ValiError(issues as Issues);
+        return notOk(issues);
       }
 
       // Execute pipe and return output

@@ -1,8 +1,9 @@
-import type {
-  BaseSchema,
-  BaseSchemaAsync,
-  Input,
-  Output,
+import {
+  ok,
+  type BaseSchema,
+  type BaseSchemaAsync,
+  type Input,
+  type Output,
 } from '../../types.ts';
 
 /**
@@ -53,7 +54,7 @@ export function nullableAsync<
     async parse(input, info) {
       // Allow `null` values to pass
       if (input === null) {
-        return input;
+        return ok(input);
       }
 
       // Parse wrapped schema and return output

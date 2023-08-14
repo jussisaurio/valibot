@@ -1,5 +1,5 @@
 import { ValiError } from '../../error/index.ts';
-import type { ValidateInfo } from '../../types.ts';
+import { notOk, ok, type ValidateInfo } from '../../types.ts';
 import { getIssue } from '../../utils/index.ts';
 
 /**
@@ -16,7 +16,7 @@ export function equal<
 >(requirement: TRequirement, error?: string) {
   return (input: TInput, info: ValidateInfo) => {
     if (input !== requirement) {
-      throw new ValiError([
+      return notOk([
         getIssue(info, {
           validation: 'equal',
           message: error || 'Invalid input',
@@ -24,6 +24,6 @@ export function equal<
         }),
       ]);
     }
-    return input;
+    return ok(input);
   };
 }

@@ -1,6 +1,6 @@
 import { ValiError } from '../../error/index.ts';
 import type { ObjectSchemaAsync } from '../../schemas/object/index.ts';
-import type { Output } from '../../types.ts';
+import { notOk, type Output } from '../../types.ts';
 import { getIssue } from '../../utils/index.ts';
 
 /**
@@ -33,7 +33,7 @@ export function strictAsync<TSchema extends ObjectSchemaAsync<any>>(
 
       // Check length of input and output keys
       if (Object.keys(input as object).length !== Object.keys(output).length) {
-        throw new ValiError([
+        return notOk([
           getIssue(info, {
             reason: 'object',
             validation: 'strict',
