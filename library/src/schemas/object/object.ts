@@ -56,7 +56,7 @@ export function object<TObjectShape extends ObjectShape>(
   const { error, pipe } = getErrorAndPipe(arg2, arg3);
 
   // Create cached entries
-  let cachedEntries: [string, BaseSchema<any>][];
+  let cachedEntries: (string | BaseSchema<any>)[];
 
   // Create and return object schema
   return {
@@ -99,15 +99,17 @@ export function object<TObjectShape extends ObjectShape>(
       }
 
       // Cache object entries lazy
-      cachedEntries = cachedEntries || Object.entries(object);
+      cachedEntries = cachedEntries || Object.entries(object).flat();
 
       // Create issues and output
       let issues: Issues | undefined;
       const output: Record<string, any> = {};
 
       // Parse schema of each key
-      for (const [key, schema] of cachedEntries) {
+      for (let k = 0; k < cachedEntries.length; k += 2) {
         // Get value by key
+        const key = cachedEntries[k] as string;
+        const schema = cachedEntries[k + 1] as BaseSchema<any>;
         const value = (input as Record<string, unknown>)[key];
 
         // Get parse result of value

@@ -63,7 +63,7 @@ export function objectAsync<TObjectShape extends ObjectShapeAsync>(
   const { error, pipe } = getErrorAndPipe(arg2, arg3);
 
   // Create cached entries
-  let cachedEntries: [string, BaseSchema<any> | BaseSchemaAsync<any>][];
+  let cachedEntries: (string | BaseSchema<any>)[];
 
   // Create and return async object schema
   return {
@@ -106,7 +106,7 @@ export function objectAsync<TObjectShape extends ObjectShapeAsync>(
       }
 
       // Cache object entries lazy
-      cachedEntries = cachedEntries || Object.entries(object);
+      cachedEntries = cachedEntries || Object.entries(object).flat();
 
       // Create issues and output
       let issues: Issues | undefined;
@@ -114,7 +114,10 @@ export function objectAsync<TObjectShape extends ObjectShapeAsync>(
 
       // Parse schema of each key
       await Promise.all(
-        cachedEntries.map(async ([key, schema]) => {
+        cachedEntries.map(async (el, i, arr) => {
+          if (i % 2 === 1) return;
+          const key = el as string;
+          const schema = arr[i + 1] as BaseSchema<any>;
           // If not aborted early, continue execution
           if (!(info?.abortEarly && issues)) {
             // Get value by key
